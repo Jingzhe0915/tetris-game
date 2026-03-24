@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tetris</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #141418;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Segoe UI', monospace;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ── TOP BAR ── */
+    #topbar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .stat {
+      text-align: center;
+      background: #1e1e26;
+      border: 1px solid #2e2e3a;
+      border-radius: 6px;
+      padding: 6px 12px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .stat-val {
+      font-size: 18px;
+      color: #f0f0f0;
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    /* ── MAIN LAYOUT ── */
+    #main {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    #board-wrap {
+      position: relative;
+    }
+
+    canvas#board {
+      display: block;
+      border-radius: 4px;
+      border: 2px solid #2e2e3a;
+    }
+
+    /* ── SIDE PANEL ── */
+    #side {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 90px;
+      position: relative;
+    }
+
+    .panel {
+      background: #1e1e26;
+      border: 1px solid #2e2e3a;
+      border-radius: 6px;
+      padding: 8px;
+    }
+
+    .panel-label {
+      font-size: 9px;
+      color: #666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    canvas#next {
+      display: block;
+    }
+
+    canvas#hold-canvas {
+      display: block;
+    }
+
+    #level-bar-wrap {
+      height: 6px;
+      background: #2a2a36;
+      border-radius: 3px;
+      margin-top: 4px;
+    }
+
+    #level-bar {
+      height: 6px;
+      background: #7986cb;
+      border-radius: 3px;
+      width: 0%;
+      transition: width .3s;
+    }
+
+    /* ── PAUSE BUTTON ── */
+    #pause-btn {
+      width: 100%;
+      padding: 7px 0;
+      background: #1e1e26;
+      border: 1px solid #2e2e3a;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 12px;
+      font-family: monospace;
+      cursor: pointer;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    #pause-btn:hover {
+      background: #2a2a36;
+      color: #fff;
+    }
+
+    #pause-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: #aaa;
+    }
+
+    #pause-btn:hover svg {
+      fill: #fff;
+    }
+
+    /* ── OVERLAY ── */
+    #overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 14, 0.92);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 4px;
+      z-index: 10;
+    }
+
+    #ov-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      font-family: monospace;
+    }
+
+    #ov-sub {
+      font-size: 12px;
+      color: #666;
+      font-family: monospace;
+    }
+
+    #play-btn {
+      padding: 11px 36px;
+      background: #5c6bc0;
+      color: #fff;
+      border: none;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      border-radius: 5px;
+      letter-spacing: 2px;
+      font-family: monospace;
+      margin-top: 4px;
+    }
+
+    #play-btn:hover {
+      background: #7986cb;
+    }
+
+    #ov-hint {
+      font-size: 10px;
+      color: #444;
+      font-family: monospace;
+      margin-top: 6px;
+      text-align: center;
+      line-height: 1.9;
+    }
+
+    /* ── GEAR / SETTINGS ── */
+    #gear-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      opacity: 0.3;
+      transition: opacity .2s;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      align-self: center;
+    }
+
+    #gear-btn:hover {
+      opacity: 0.8;
+    }
+
+    #gear-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: #aaa;
+    }
+
+    #settings-panel {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: -220px;
+      width: 210px;
+      background: #1a1a22;
+      border: 1px solid #2e2e3a;
+      border-radius: 8px;
+      padding: 12px;
+      z-index: 20;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    #settings-panel.open {
+      display: flex;
+    }
+
+    .sp-title {
+      font-size: 10px;
+      color: #666;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .key-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #222;
+    }
+
+    .key-row:last-of-type {
+      border-bottom: none;
+    }
+
+    .key-name {
+      font-size: 11px;
+      color: #888;
+      font-family: monospace;
+    }
+
+    .key-btn {
+      padding: 3px 8px;
+      background: #22222e;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #ccc;
+      font-size: 11px;
+      font-family: monospace;
+      cursor: pointer;
+      min-width: 56px;
+      text-align: center;
+    }
+
+    .key-btn:hover {
+      background: #2a2a38;
+    }
+
+    .key-btn.listening {
+      background: #2a2040;
+      border-color: #7986cb;
+      color: #9fa8da;
+    }
+
+    #sp-close {
+      margin-top: 8px;
+      padding: 5px;
+      background: #1e1e28;
+      border: 1px solid #2a2a36;
+      border-radius: 4px;
+      color: #666;
+      font-size: 10px;
+      cursor: pointer;
+      text-align: center;
+      letter-spacing: 1px;
+      font-family: monospace;
+    }
+
+    #sp-close:hover {
+      color: #ccc;
+    }
+
+    /* ── KEY DISPLAY (desktop) ── */
+    #key-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      justify-content: center;
+      max-width: 340px;
+    }
+
+    .kd {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #1e1e26;
+      border: 1px solid #2e2e3a;
+      border-radius: 6px;
+      padding: 5px 8px;
+    }
+
+    .kd-key {
+      background: #2a2a36;
+      border: 1px solid #3a3a4a;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 11px;
+      color: #c8cff5;
+      font-family: monospace;
+      min-width: 32px;
+      text-align: center;
+      transition: background .1s, color .1s;
+    }
+
+    .kd-key.active {
+      background: #5c6bc0;
+      border-color: #7986cb;
+      color: #fff;
+    }
+
+    .kd-label {
+      font-size: 10px;
+      color: #666;
+      font-family: monospace;
+    }
+
+    /* ── MOBILE CONTROLS ── */
+    #mobile-btns {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 12px;
+      width: 100%;
+      max-width: 360px;
+      padding: 0 12px;
+    }
+
+    /* row layout */
+    .mb-row {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    /* base button */
+    .mbtn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: #1e1e26;
+      border: 1px solid #2e2e3a;
+      color: #ccc;
+      cursor: pointer;
+      border-radius: 10px;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    .mbtn:active {
+      background: #3a3a4a;
+      color: #fff;
+      transform: scale(0.95);
+    }
+
+    .mbtn .mb-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .mbtn .mb-label {
+      font-size: 9px;
+      color: #555;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-family: monospace;
+    }
+
+    .mbtn:active .mb-label {
+      color: #aaa;
+    }
+
+    /* sizes */
+    .mbtn-lg {
+      width: 72px;
+      height: 64px;
+    }
+
+    .mbtn-md {
+      width: 60px;
+      height: 56px;
+    }
+
+    .mbtn-sm {
+      width: 52px;
+      height: 48px;
+    }
+
+    /* special colors */
+    #mb-hard {
+      background: #1e2630;
+      border-color: #3a4a5a;
+    }
+
+    #mb-hard:active {
+      background: #2a3a4a;
+    }
+
+    #mb-pause-m {
+      background: #261e26;
+      border-color: #3a2e3a;
+    }
+
+    #mb-pause-m:active {
+      background: #3a2e3a;
+    }
+
+    @media(hover:none), (max-width:600px) {
+      #mobile-btns {
+        display: flex;
+      }
+
+      #key-display {
+        display: none;
+      }
+
+      body {
+        justify-content: flex-start;
+        padding-top: 12px;
+      }
+
+      #topbar {
+        gap: 8px;
+      }
+
+      .stat {
+        padding: 5px 8px;
+      }
+
+      .stat-label {
+        font-size: 9px;
+      }
+
+      .stat-val {
+        font-size: 15px;
+      }
+
+      #settings-panel {
+        right: auto;
+        left: 0;
+        top: auto;
+        bottom: -320px;
+        width: 100%;
+        position: fixed;
+        z-index: 100;
+        border-radius: 12px 12px 0 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="topbar">
+    <div class="stat">
+      <div class="stat-label">Score</div>
+      <div class="stat-val" id="sv">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Level</div>
+      <div class="stat-val" id="lv">1</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Lines</div>
+      <div class="stat-val" id="linv">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Best</div>
+      <div class="stat-val" id="bv">0</div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="board-wrap">
+      <canvas id="board" width="200" height="400"></canvas>
+      <div id="overlay">
+        <div id="ov-title" style="color:#7986cb">TETRIS</div>
+        <div id="ov-sub">clear lines, beat your best</div>
+        <button id="play-btn">PLAY</button>
+        <div id="ov-hint">move &#8592;&#8594; &nbsp;|&nbsp; rotate &#8593; &nbsp;|&nbsp; soft &#8595;<br>hard SPACE
+          &nbsp;|&nbsp; hold C &nbsp;|&nbsp; P pause &nbsp;|&nbsp; R restart</div>
+      </div>
+    </div>
+    <div id="side">
+      <div class="panel">
+        <div class="panel-label">Hold</div><canvas id="hold-canvas" width="74" height="60"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-label">Next</div><canvas id="next" width="74" height="74"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-label">Level</div>
+        <div style="font-size:11px;color:#666;font-family:monospace;" id="lines-to-next">10 lines</div>
+        <div id="level-bar-wrap">
+          <div id="level-bar"></div>
+        </div>
+      </div>
+      <button id="pause-btn" title="Pause (P)">
+        <svg viewBox="0 0 24 24">
+          <rect x="6" y="4" width="4" height="16" />
+          <rect x="14" y="4" width="4" height="16" />
+        </svg>
+        PAUSE
+      </button>
+      <button id="gear-btn" title="Settings">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M19.14 12.94c.04-.3.06-.61.06-.94s-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96a7.02 7.02 0 00-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.47.47 0 00-.59.22L2.74 8.87a.47.47 0 00.12.61l2.03 1.58c-.05.3-.07.63-.07.94s.02.64.07.94l-2.03 1.58a.47.47 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.37 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.57 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.47.47 0 00-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+        </svg>
+      </button>
+      <div id="settings-panel">
+        <div class="sp-title">Key Bindings</div>
+        <div class="key-row"><span class="key-name">Left</span><button class="key-btn" data-action="left">←
+            Left</button></div>
+        <div class="key-row"><span class="key-name">Right</span><button class="key-btn" data-action="right">→
+            Right</button></div>
+        <div class="key-row"><span class="key-name">Rotate ClockWise</span><button class="key-btn" data-action="rotateCW">↑
+            Up</button></div>
+        <div class="key-row"><span class="key-name">Rotate Counter-ClockWise</span><button class="key-btn"
+            data-action="rotateCCW">Z</button></div>
+        <div class="key-row"><span class="key-name">Soft Drop</span><button class="key-btn" data-action="soft">↓
+            Down</button></div>
+        <div class="key-row"><span class="key-name">Hard Drop</span><button class="key-btn"
+            data-action="hard">Space</button></div>
+        <div class="key-row"><span class="key-name">Hold</span><button class="key-btn" data-action="hold">C</button>
+        </div>
+        <div id="sp-close">CLOSE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop key display -->
+  <div id="key-display">
+    <div class="kd"><span class="kd-key" id="kd-left">←</span><span class="kd-label">move left</span></div>
+    <div class="kd"><span class="kd-key" id="kd-right">→</span><span class="kd-label">move right</span></div>
+    <div class="kd"><span class="kd-key" id="kd-rotateCW">↑</span><span class="kd-label">rotate ClockWise</span></div>
+    <div class="kd"><span class="kd-key" id="kd-rotateCCW">Z</span><span class="kd-label">rotate Counter-ClockWise</span></div>
+    <div class="kd"><span class="kd-key" id="kd-soft">↓</span><span class="kd-label">soft drop</span></div>
+    <div class="kd"><span class="kd-key" id="kd-hard">SPACE</span><span class="kd-label">hard drop</span></div>
+    <div class="kd"><span class="kd-key" id="kd-hold">C</span><span class="kd-label">hold</span></div>
+    <div class="kd"><span class="kd-key" id="kd-restart">R</span><span class="kd-label">restart</span></div>
+    <div class="kd"><span class="kd-key" id="kd-pause">P</span><span class="kd-label">pause</span></div>
+  </div>
+
+  <!-- Mobile controls -->
+  <div id="mobile-btns">
+    <!-- Row 1: Hold | Rotate CCW | Rotate CW | Pause -->
+    <div class="mb-row">
+      <div class="mbtn mbtn-md" id="mb-hold">
+        <span class="mb-icon">&#8597;</span>
+        <span class="mb-label">Hold</span>
+      </div>
+      <div class="mbtn mbtn-md" id="mb-rotCCW">
+        <span class="mb-icon">&#8635;</span>
+        <span class="mb-label">Rotate Left</span>
+      </div>
+      <div class="mbtn mbtn-md" id="mb-rotCW">
+        <span class="mb-icon">&#8634;</span>
+        <span class="mb-label">Rotate Right</span>
+      </div>
+      <div class="mbtn mbtn-md" id="mb-pause-m">
+        <span class="mb-icon">&#9646;&#9646;</span>
+        <span class="mb-label">Pause</span>
+      </div>
+    </div>
+    <!-- Row 2: Left | Soft Drop | Hard Drop | Right -->
+    <div class="mb-row">
+      <div class="mbtn mbtn-lg" id="mb-left">
+        <span class="mb-icon">&#8592;</span>
+        <span class="mb-label">Left</span>
+      </div>
+      <div class="mbtn mbtn-md" id="mb-soft">
+        <span class="mb-icon">&#8595;</span>
+        <span class="mb-label">Soft</span>
+      </div>
+      <div class="mbtn mbtn-md" id="mb-hard">
+        <span class="mb-icon">&#9660;</span>
+        <span class="mb-label">Drop</span>
+      </div>
+      <div class="mbtn mbtn-lg" id="mb-right">
+        <span class="mb-icon">&#8594;</span>
+        <span class="mb-label">Right</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const C = 10, R = 20, B = 20;
+    const bc = document.getElementById('board'), bx = bc.getContext('2d');
+    const nc = document.getElementById('next'), nx = nc.getContext('2d');
+    const hc = document.getElementById('hold-canvas'), hx = hc.getContext('2d');
+    const overlay = document.getElementById('overlay');
+    const ovTitle = document.getElementById('ov-title');
+    const ovSub = document.getElementById('ov-sub');
+    const playBtn = document.getElementById('play-btn');
+    const levelBar = document.getElementById('level-bar');
+    const linesToNext = document.getElementById('lines-to-next');
+    const pauseBtn = document.getElementById('pause-btn');
+
+    const PIECE_COLORS = [null,
+      { fill: '#26d4e8', hi: '#7eeaf3', sh: '#0097a7' },
+      { fill: '#ffaa22', hi: '#ffcc77', sh: '#e65100' },
+      { fill: '#2979ff', hi: '#6ea8ff', sh: '#0d47a1' },
+      { fill: '#ffee44', hi: '#fff59d', sh: '#f9a825' },
+      { fill: '#f44336', hi: '#ff8a80', sh: '#b71c1c' },
+      { fill: '#4caf50', hi: '#a5d6a7', sh: '#1b5e20' },
+      { fill: '#aa44dd', hi: '#dd88ff', sh: '#6a1b9a' },
+    ];
+    const PIECES = [null,
+      [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
+      [[2, 0, 0], [2, 2, 2], [0, 0, 0]],
+      [[0, 0, 3], [3, 3, 3], [0, 0, 0]],
+      [[4, 4], [4, 4]],
+      [[0, 5, 5], [5, 5, 0], [0, 0, 0]],
+      [[6, 6, 0], [0, 6, 6], [0, 0, 0]],
+      [[0, 7, 0], [7, 7, 7], [0, 0, 0]],
+    ];
+
+    let keys = { left: 'ArrowLeft', right: 'ArrowRight', rotateCW: 'ArrowUp', rotateCCW: 'KeyZ', soft: 'ArrowDown', hard: 'Space', hold: 'KeyC' };
+
+    function keyLabel(code) {
+      const map = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Space: 'SPACE', KeyZ: 'Z', KeyX: 'X', KeyC: 'C', KeyQ: 'Q', KeyW: 'W', KeyR: 'R', KeyP: 'P', ShiftLeft: 'LShift', ShiftRight: 'RShift' };
+      return map[code] || code.replace('Key', '');
+    }
+    function keyLabelFull(code) {
+      const map = { ArrowLeft: '← Left', ArrowRight: '→ Right', ArrowUp: '↑ Up', ArrowDown: '↓ Down', Space: 'Space', KeyZ: 'Z', KeyX: 'X', KeyC: 'C', KeyQ: 'Q', KeyW: 'W', KeyR: 'R', ShiftLeft: 'L.Shift', ShiftRight: 'R.Shift' };
+      return map[code] || code.replace('Key', '');
+    }
+    function updateKeyBtns() {
+      document.querySelectorAll('.key-btn').forEach(b => { b.textContent = keyLabelFull(keys[b.dataset.action]); });
+      ['left', 'right', 'rotateCW', 'rotateCCW', 'soft', 'hard', 'hold'].forEach(a => {
+        const el = document.getElementById('kd-' + a);
+        if (el) el.textContent = keyLabel(keys[a]);
+      });
+    }
+    updateKeyBtns();
+
+    function flashKey(id) {
+      const el = document.getElementById('kd-' + id);
+      if (!el) return;
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), 150);
+    }
+
+    let listeningBtn = null;
+    document.querySelectorAll('.key-btn').forEach(b => {
+      b.addEventListener('click', () => {
+        if (listeningBtn) { listeningBtn.classList.remove('listening'); if (listeningBtn === b) { listeningBtn = null; return; } }
+        listeningBtn = b; b.classList.add('listening'); b.textContent = 'press key...';
+      });
+    });
+    document.getElementById('gear-btn').onclick = () => document.getElementById('settings-panel').classList.toggle('open');
+    document.getElementById('sp-close').onclick = () => document.getElementById('settings-panel').classList.remove('open');
+
+    let arena, player, nextPiece, holdPiece, canHold, score, best = 0, level, lines, dropT, dropI, lastT, raf, running, paused;
+
+    function newArena() { return Array.from({ length: R }, () => new Array(C).fill(0)); }
+    function collide(a, p) {
+      const m = p.m, ox = p.x, oy = p.y;
+      for (let y = 0; y < m.length; y++) for (let x = 0; x < m[y].length; x++)
+        if (m[y][x] && (oy + y < 0 || oy + y >= R || ox + x < 0 || ox + x >= C || a[oy + y][ox + x])) return true;
+      return false;
+    }
+    function rotateM(m, dir) {
+      const N = m.length, res = Array.from({ length: N }, () => new Array(m[0].length).fill(0));
+      for (let y = 0; y < N; y++) for (let x = 0; x < m[y].length; x++)
+        dir > 0 ? res[x][N - 1 - y] = m[y][x] : res[m[0].length - 1 - x][y] = m[y][x];
+      return res;
+    }
+    function merge() { player.m.forEach((row, y) => row.forEach((v, x) => { if (v) arena[player.y + y][player.x + x] = v; })); }
+    function sweep() {
+      let cleared = 0;
+      for (let y = R - 1; y >= 0; y--) { if (arena[y].every(v => v)) { arena.splice(y, 1); arena.unshift(new Array(C).fill(0)); cleared++; y++; } }
+      if (cleared) {
+        const pts = [0, 100, 300, 500, 800];
+        score += (pts[cleared] || 800) * level; lines += cleared;
+        level = Math.floor(lines / 10) + 1; dropI = Math.max(60, 800 - (level - 1) * 65);
+        document.getElementById('sv').textContent = score.toLocaleString();
+        document.getElementById('lv').textContent = level;
+        document.getElementById('linv').textContent = lines;
+        if (score > best) { best = score; document.getElementById('bv').textContent = best.toLocaleString(); }
+        levelBar.style.width = ((lines % 10) / 10 * 100) + '%';
+        linesToNext.textContent = (10 - (lines % 10)) + ' lines';
+      }
+    }
+    let bag = [];
+    function fromBag() { if (!bag.length) bag = [1, 2, 3, 4, 5, 6, 7].sort(() => Math.random() - 0.5); return JSON.parse(JSON.stringify(PIECES[bag.pop()])); }
+    function spawnPiece(m) {
+      player = { m, x: Math.floor(C / 2) - Math.floor(m[0].length / 2), y: 0 };
+      if (collide(arena, player)) { gameOver(); return false; }
+      return true;
+    }
+    function spawn() { spawnPiece(nextPiece); nextPiece = fromBag(); canHold = true; drawNext(); drawHold(); }
+    function doHold() {
+      if (!canHold) return; canHold = false;
+      if (holdPiece) { const tmp = holdPiece; holdPiece = PIECES[player.m.flat().find(v => v)]; spawnPiece(JSON.parse(JSON.stringify(tmp))); }
+      else { holdPiece = PIECES[player.m.flat().find(v => v)]; spawn(); }
+      drawHold();
+    }
+    function ghostY() { let gy = player.y; while (!collide(arena, { m: player.m, x: player.x, y: gy + 1 })) gy++; return gy; }
+
+    function drawBlock(ctx, x, y, ci, size) {
+      const c = PIECE_COLORS[ci], px = x * size, py = y * size, s = size, hl = Math.max(2, s * 0.2) | 0;
+      ctx.fillStyle = c.fill; ctx.fillRect(px, py, s, s);
+      ctx.fillStyle = c.hi; ctx.fillRect(px + 1, py + 1, s - 2, hl); ctx.fillRect(px + 1, py + 1, hl, s - 2);
+      ctx.fillStyle = c.sh; ctx.fillRect(px + 1, py + s - hl - 1, s - 2, hl); ctx.fillRect(px + s - hl - 1, py + 1, hl, s - 2);
+    }
+    function drawGrid() {
+      bx.strokeStyle = 'rgba(255,255,255,0.04)'; bx.lineWidth = 0.5;
+      for (let x = 1; x < C; x++) { bx.beginPath(); bx.moveTo(x * B, 0); bx.lineTo(x * B, R * B); bx.stroke(); }
+      for (let y = 1; y < R; y++) { bx.beginPath(); bx.moveTo(0, y * B); bx.lineTo(C * B, y * B); bx.stroke(); }
+    }
+    function draw() {
+      bx.fillStyle = '#111116'; bx.fillRect(0, 0, bc.width, bc.height);
+      drawGrid();
+      arena.forEach((row, y) => row.forEach((v, x) => { if (v) drawBlock(bx, x, y, v, B); }));
+      if (player && player.m) {
+        const gy = ghostY();
+        if (gy !== player.y) {
+          player.m.forEach((row, y) => row.forEach((v, x) => {
+            if (v) {
+              bx.fillStyle = 'rgba(255,255,255,0.08)'; bx.fillRect((player.x + x) * B, (gy + y) * B, B, B);
+              bx.strokeStyle = 'rgba(255,255,255,0.2)'; bx.lineWidth = 0.5;
+              bx.strokeRect((player.x + x) * B + 0.5, (gy + y) * B + 0.5, B - 1, B - 1);
+            }
+          }));
+        }
+        player.m.forEach((row, y) => row.forEach((v, x) => { if (v) drawBlock(bx, player.x + x, player.y + y, v, B); }));
+      }
+      if (paused) {
+        bx.fillStyle = 'rgba(10,10,14,0.6)'; bx.fillRect(0, 0, bc.width, bc.height);
+        bx.fillStyle = '#fff'; bx.font = 'bold 20px monospace'; bx.textAlign = 'center';
+        bx.fillText('PAUSED', bc.width / 2, bc.height / 2 - 10);
+        bx.font = '12px monospace'; bx.fillStyle = '#555';
+        bx.fillText('press P to continue', bc.width / 2, bc.height / 2 + 16);
+      }
+    }
+    function drawMini(ctx, w, h, matrix) {
+      ctx.fillStyle = '#12121a'; ctx.fillRect(0, 0, w, h);
+      if (!matrix) return;
+      const s = 14, ci = matrix.flat().find(v => v) || 1;
+      const ox = Math.floor((w / s - matrix[0].length) / 2), oy = Math.floor((h / s - matrix.length) / 2);
+      matrix.forEach((row, y) => row.forEach((v, x) => { if (v) drawBlock(ctx, ox + x, oy + y, ci, s); }));
+    }
+    function drawNext() { drawMini(nx, 74, 74, nextPiece); }
+    function drawHold() { drawMini(hx, 74, 60, holdPiece || null); }
+
+    function loop(t = 0) {
+      if (!running) return;
+      if (!paused) {
+        const dt = Math.min(t - lastT, 50); lastT = t;
+        dropT += dt;
+        if (dropT > dropI) { player.y++; if (collide(arena, player)) { player.y--; merge(); sweep(); spawn(); } dropT = 0; }
+      } else {
+        lastT = t;
+      }
+      draw(); raf = requestAnimationFrame(loop);
+    }
+
+    function togglePause() {
+      if (!running) return;
+      paused = !paused;
+      pauseBtn.innerHTML = paused
+        ? '<svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg> RESUME'
+        : '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> PAUSE';
+      const kdp = document.getElementById('kd-pause');
+      if (kdp) { kdp.classList.toggle('active', paused); }
+    }
+
+    pauseBtn.onclick = togglePause;
+
+    function startGame() {
+      cancelAnimationFrame(raf);
+      arena = newArena(); bag = []; holdPiece = null; canHold = true;
+      score = 0; level = 1; lines = 0; dropI = 800; dropT = 0; lastT = 0; paused = false;
+      document.getElementById('sv').textContent = '0';
+      document.getElementById('lv').textContent = '1';
+      document.getElementById('linv').textContent = '0';
+      levelBar.style.width = '0%'; linesToNext.textContent = '10 lines';
+      pauseBtn.innerHTML = '<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> PAUSE';
+      nextPiece = fromBag(); spawn();
+      running = true; overlay.style.display = 'none';
+      raf = requestAnimationFrame(loop);
+    }
+    function gameOver() {
+      running = false; cancelAnimationFrame(raf);
+      if (score > best) { best = score; document.getElementById('bv').textContent = best.toLocaleString(); }
+      ovTitle.textContent = 'GAME OVER'; ovTitle.style.color = '#f44336';
+      ovSub.textContent = 'score: ' + score.toLocaleString();
+      playBtn.textContent = 'PLAY AGAIN'; overlay.style.display = 'flex';
+    }
+    playBtn.onclick = startGame;
+
+    function doLeft() { if (!running || paused) return; player.x--; if (collide(arena, player)) player.x++; flashKey('left'); draw(); }
+    function doRight() { if (!running || paused) return; player.x++; if (collide(arena, player)) player.x--; flashKey('right'); draw(); }
+    function doSoft() { if (!running || paused) return; player.y++; if (collide(arena, player)) { player.y--; merge(); sweep(); spawn(); } dropT = 0; flashKey('soft'); draw(); }
+    function doHard() { if (!running || paused) return; while (!collide(arena, player)) player.y++; player.y--; merge(); sweep(); spawn(); flashKey('hard'); draw(); }
+    function doRotateCW() {
+      if (!running || paused) return; const orig = player.m; player.m = rotateM(player.m, 1);
+      for (const k of [0, 1, -1, 2, -2]) { player.x += k; if (!collide(arena, player)) { flashKey('rotateCW'); draw(); return; } player.x -= k; }
+      player.m = orig; draw();
+    }
+    function doRotateCCW() {
+      if (!running || paused) return; const orig = player.m; player.m = rotateM(player.m, -1);
+      for (const k of [0, 1, -1, 2, -2]) { player.x += k; if (!collide(arena, player)) { flashKey('rotateCCW'); draw(); return; } player.x -= k; }
+      player.m = orig; draw();
+    }
+    function handleKey(code, e) {
+      if (listeningBtn) { e && e.preventDefault(); return; }
+      if (code === 'KeyR') { if (running) { flashKey('restart'); startGame(); } return; }
+      if (code === 'KeyP' || code === 'Escape') { flashKey('pause'); togglePause(); return; }
+      if (!running || paused) return;
+      if (e) e.preventDefault();
+      if (code === keys.left) doLeft();
+      else if (code === keys.right) doRight();
+      else if (code === keys.rotateCW) doRotateCW();
+      else if (code === keys.rotateCCW) doRotateCCW();
+      else if (code === keys.soft) doSoft();
+      else if (code === keys.hard) doHard();
+      else if (code === keys.hold) { doHold(); flashKey('hold'); }
+    }
+    document.addEventListener('keydown', e => {
+      if (listeningBtn) { e.preventDefault(); keys[listeningBtn.dataset.action] = e.code; listeningBtn.classList.remove('listening'); listeningBtn = null; updateKeyBtns(); return; }
+      handleKey(e.code, e);
+    });
+
+    function addTouch(id, fn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('touchstart', e => { e.preventDefault(); fn(); }, { passive: false });
+      el.addEventListener('mousedown', e => { e.preventDefault(); fn(); });
+    }
+    addTouch('mb-left', doLeft);
+    addTouch('mb-right', doRight);
+    addTouch('mb-rotCW', doRotateCW);
+    addTouch('mb-rotCCW', doRotateCCW);
+    addTouch('mb-soft', doSoft);
+    addTouch('mb-hard', doHard);
+    addTouch('mb-hold', () => { doHold(); flashKey('hold'); });
+    addTouch('mb-pause-m', togglePause);
+
+    // Long press repeat for left/right/soft on mobile
+    function addRepeat(id, fn) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let timer, interval;
+      const start = e => { e.preventDefault(); fn(); timer = setTimeout(() => { interval = setInterval(fn, 80); }, 300); };
+      const stop = () => { clearTimeout(timer); clearInterval(interval); };
+      el.addEventListener('touchstart', start, { passive: false });
+      el.addEventListener('touchend', stop);
+      el.addEventListener('touchcancel', stop);
+      el.addEventListener('mousedown', start);
+      el.addEventListener('mouseup', stop);
+      el.addEventListener('mouseleave', stop);
+    }
+    addRepeat('mb-left', doLeft);
+    addRepeat('mb-right', doRight);
+    addRepeat('mb-soft', doSoft);
+
+    drawNext(); drawHold(); draw();
+  </script>
+</body>
+
+</html>
