@@ -528,8 +528,9 @@
         <div id="ov-title" style="color:#7986cb">TETRIS</div>
         <div id="ov-sub">clear lines, beat your best</div>
         <button id="play-btn">PLAY</button>
-        <div id="ov-hint">move &#8592;&#8594; &nbsp;|&nbsp; rotate &#8593; &nbsp;|&nbsp; soft &#8595;<br>hard SPACE
-          &nbsp;|&nbsp; hold C &nbsp;|&nbsp; P pause &nbsp;|&nbsp; R restart</div>
+        <div id="ov-hint">move &#8592;&#8594; &nbsp;|&nbsp; rotate &#8593; &nbsp;|&nbsp; soft drop &#8595;<br>hard drop
+          SPACE
+          &nbsp;|&nbsp; hold C &nbsp;|&nbsp; P pause/continue &nbsp;|&nbsp; R restart</div>
       </div>
     </div>
     <div id="side">
@@ -565,7 +566,8 @@
             Left</button></div>
         <div class="key-row"><span class="key-name">Right</span><button class="key-btn" data-action="right">→
             Right</button></div>
-        <div class="key-row"><span class="key-name">Rotate ClockWise</span><button class="key-btn" data-action="rotateCW">↑
+        <div class="key-row"><span class="key-name">Rotate ClockWise</span><button class="key-btn"
+            data-action="rotateCW">↑
             Up</button></div>
         <div class="key-row"><span class="key-name">Rotate Counter-ClockWise</span><button class="key-btn"
             data-action="rotateCCW">Z</button></div>
@@ -585,12 +587,13 @@
     <div class="kd"><span class="kd-key" id="kd-left">←</span><span class="kd-label">move left</span></div>
     <div class="kd"><span class="kd-key" id="kd-right">→</span><span class="kd-label">move right</span></div>
     <div class="kd"><span class="kd-key" id="kd-rotateCW">↑</span><span class="kd-label">rotate ClockWise</span></div>
-    <div class="kd"><span class="kd-key" id="kd-rotateCCW">Z</span><span class="kd-label">rotate Counter-ClockWise</span></div>
+    <div class="kd"><span class="kd-key" id="kd-rotateCCW">Z</span><span class="kd-label">rotate
+        Counter-ClockWise</span></div>
     <div class="kd"><span class="kd-key" id="kd-soft">↓</span><span class="kd-label">soft drop</span></div>
     <div class="kd"><span class="kd-key" id="kd-hard">SPACE</span><span class="kd-label">hard drop</span></div>
     <div class="kd"><span class="kd-key" id="kd-hold">C</span><span class="kd-label">hold</span></div>
     <div class="kd"><span class="kd-key" id="kd-restart">R</span><span class="kd-label">restart</span></div>
-    <div class="kd"><span class="kd-key" id="kd-pause">P</span><span class="kd-label">pause</span></div>
+    <div class="kd"><span class="kd-key" id="kd-pause">P/Esc</span><span class="kd-label">pause/continue</span></div>
   </div>
 
   <!-- Mobile controls -->
@@ -611,7 +614,8 @@
       </div>
       <div class="mbtn mbtn-md" id="mb-pause-m">
         <span class="mb-icon">&#9646;&#9646;</span>
-        <span class="mb-label">Pause</span>
+        <span class="mb-label">Pause
+          /Continue</span>
       </div>
     </div>
     <!-- Row 2: Left | Soft Drop | Hard Drop | Right -->
@@ -783,7 +787,7 @@
         bx.fillStyle = '#fff'; bx.font = 'bold 20px monospace'; bx.textAlign = 'center';
         bx.fillText('PAUSED', bc.width / 2, bc.height / 2 - 10);
         bx.font = '12px monospace'; bx.fillStyle = '#555';
-        bx.fillText('press P to continue', bc.width / 2, bc.height / 2 + 16);
+        bx.fillText('press P or Esc to continue', bc.width / 2, bc.height / 2 + 16);
       }
     }
     function drawMini(ctx, w, h, matrix) {
