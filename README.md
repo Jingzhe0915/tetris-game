@@ -78,4 +78,8 @@ Since this project is built with standard web technologies, no compiler or serve
 * **CSS Grid & Flexbox:** Ensures the UI scales perfectly from desktop monitors to mobile screens.
 * **Local Logic:** The game uses a 2D array (Matrix) to handle collision detection and line clearing.
 
+---
 
+## 📝 License
+
+This project is open-source and available under the **MIT License**. Feel free to fork it and add your own features!
