@@ -82,4 +82,4 @@ Since this project is built with standard web technologies, no compiler or serve
 
 ## 📝 License
 
-This project is open-source and available under the **MIT License**. Feel free to fork it and add your own features!
+MIT — see [LICENSE](LICENSE) for details.
